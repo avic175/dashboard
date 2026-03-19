@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Matrículas 2026 — Colégio Avicenna</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F5F4F0; color: #1a1a1a; min-height: 100vh; }
+  header { background: #fff; border-bottom: 1px solid #e5e5e0; padding: 1rem 2rem; display: flex; align-items: center; gap: 12px; }
+  .logo { width: 36px; height: 36px; background: #1a1a6e; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px; }
+  header h1 { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+  header p { font-size: 12px; color: #888; margin-top: 2px; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .metric { background: #fff; border-radius: 10px; padding: 16px 20px; border: 1px solid #e5e5e0; }
+  .metric-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .metric-value { font-size: 28px; font-weight: 600; color: #1a1a1a; }
+  .metric-sub { font-size: 12px; color: #888; margin-top: 4px; }
+  .metric-sub.pos { color: #1D9E75; }
+  .charts-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 1.5rem; }
+  .card { background: #fff; border-radius: 12px; padding: 1.5rem; border: 1px solid #e5e5e0; }
+  .card-title { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+  .card-sub { font-size: 12px; color: #888; margin-bottom: 16px; }
+  .legend { display: flex; gap: 16px; margin-bottom: 14px; flex-wrap: wrap; }
+  .legend span { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .table-card { background: #fff; border-radius: 12px; padding: 1.5rem; border: 1px solid #e5e5e0; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { font-size: 11px; font-weight: 600; color: #888; text-align: left; padding: 8px 12px; border-bottom: 1px solid #e5e5e0; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { padding: 9px 12px; color: #1a1a1a; border-bottom: 1px solid #f0f0ec; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafaf8; }
+  tr.total-row td { font-weight: 600; background: #f5f4f0; border-top: 1px solid #e5e5e0; }
+  .pct-bar { height: 6px; border-radius: 3px; background: #eee; overflow: hidden; width: 70px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+  .pct-fill { height: 100%; border-radius: 3px; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: #EAF3DE; color: #3B6D11; }
+  .badge-amber { background: #FAEEDA; color: #854F0B; }
+  .badge-red { background: #FCEBEB; color: #A32D2D; }
+  .badge-gray { background: #F1EFE8; color: #5F5E5A; }
+  .updated { font-size: 11px; color: #aaa; text-align: right; margin-top: 1.5rem; }
+  @media (max-width: 768px) {
+    .metrics { grid-template-columns: repeat(2, 1fr); }
+    .charts-row { grid-template-columns: 1fr; }
+    .container { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AVI</div>
+  <div>
+    <h1>Dashboard de Matrículas 2026</h1>
+    <p>Colégio Avicenna — Atualizado em <span id="dataAtual"></span></p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-label">Total de alunos 2026</div>
+      <div class="metric-value" id="m-total"></div>
+      <div class="metric-sub pos" id="m-novos-sub"></div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Rematrículas</div>
+      <div class="metric-value" id="m-remat"></div>
+      <div class="metric-sub" id="m-remat-sub"></div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Taxa de rematrícula</div>
+      <div class="metric-value" id="m-pct"></div>
+      <div class="metric-sub pos">excl. formandos</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Turmas ativas</div>
+      <div class="metric-value">22</div>
+      <div class="metric-sub">salas em 2026</div>
+    </div>
+  </div>
+
+  <div class="charts-row">
+    <div class="card">
+      <div class="card-title">Alunos por turma — 2025 vs 2026</div>
+      <div class="card-sub">Comparativo de total de alunos por sala</div>
+      <div class="legend">
+        <span><span class="legend-dot" style="background:#378ADD"></span>2025</span>
+        <span><span class="legend-dot" style="background:#1D9E75"></span>2026</span>
+        <span><span class="legend-dot" style="background:#B4B2A9"></span>Formandos</span>
+      </div>
+      <div style="position:relative;width:100%;height:320px;">
+        <canvas id="chartComparativo"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Taxa de rematrícula por segmento</div>
+      <div class="card-sub">% de alunos que permaneceram</div>
+      <div style="position:relative;width:100%;height:320px;">
+        <canvas id="chartRemat"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="card-title" style="margin-bottom:4px;">Detalhamento por turma</div>
+    <div class="card-sub" style="margin-bottom:16px;">Rematrículas, novos alunos e taxa por sala</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Turma</th>
+          <th>Alunos 2025</th>
+          <th>Rematrículas</th>
+          <th>Novos</th>
+          <th>Total 2026</th>
+          <th>% Remat.</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="updated">Última atualização: <span id="dataAtual2"></span></div>
+</div>
+
+<script>
+// ============================================================
+// DADOS — atualize aqui sempre que quiser refletir novos números
+// ============================================================
+const dados = [
+  { sala: 'Infantil 3',  a2025: 6,  remat: 6,    novos: 0,  formando: false },
+  { sala: 'Infantil 4',  a2025: 12, remat: 10,   novos: 2,  formando: false },
+  { sala: 'Infantil 5',  a2025: 15, remat: 8,    novos: 2,  formando: false },
+  { sala: '1º Ano',      a2025: 39, remat: 37,   novos: 11, formando: false },
+  { sala: '2º Ano',      a2025: 35, remat: 31,   novos: 1,  formando: false },
+  { sala: '3º Ano',      a2025: 31, remat: 28,   novos: 2,  formando: false },
+  { sala: '4º Ano',      a2025: 25, remat: 21,   novos: 5,  formando: false },
+  { sala: '5º Ano',      a2025: 26, remat: 19,   novos: 2,  formando: false },
+  { sala: '6º Ano',      a2025: 42, remat: 33,   novos: 8,  formando: false },
+  { sala: '7º Ano',      a2025: 53, remat: 38,   novos: 6,  formando: false },
+  { sala: '8º Ano',      a2025: 50, remat: 45,   novos: 6,  formando: false },
+  { sala: '9º Ano',      a2025: 50, remat: 36,   novos: 5,  formando: false },
+  { sala: '1ª Série',    a2025: 47, remat: 32,   novos: 6,  formando: false },
+  { sala: '2ª Série',    a2025: 40, remat: 39,   novos: 10, formando: false },
+  { sala: '3ª Série',    a2025: 52, remat: null, novos: 3,  formando: true  },
+];
+// ============================================================
+
+dados.forEach(d => {
+  d.total2026 = (d.remat || 0) + d.novos;
+  d.pct = (!d.formando && d.a2025 > 0) ? Math.round(d.remat / d.a2025 * 100) : null;
+});
+
+const naoFormandos = dados.filter(d => !d.formando);
+const tot2025 = naoFormandos.reduce((s,d) => s + d.a2025, 0);
+const totRemat = naoFormandos.reduce((s,d) => s + d.remat, 0);
+const totNovos = dados.reduce((s,d) => s + d.novos, 0);
+const tot2026  = dados.reduce((s,d) => s + d.total2026, 0);
+const pctGeral = Math.round(totRemat / tot2025 * 100);
+
+document.getElementById('m-total').textContent    = tot2026;
+document.getElementById('m-novos-sub').textContent = '+' + totNovos + ' novos ingressantes';
+document.getElementById('m-remat').textContent    = totRemat;
+document.getElementById('m-remat-sub').textContent = 'de ' + tot2025 + ' alunos elegíveis';
+document.getElementById('m-pct').textContent      = pctGeral + '%';
+
+const hoje = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+document.getElementById('dataAtual').textContent  = hoje;
+document.getElementById('dataAtual2').textContent = hoje;
+
+new Chart(document.getElementById('chartComparativo'), {
+  type: 'bar',
+  data: {
+    labels: dados.map(d => d.sala),
+    datasets: [
+      { label: '2025', data: dados.map(d => d.a2025), backgroundColor: '#378ADD', borderRadius: 3, barPercentage: 0.7 },
+      { label: '2026', data: dados.map(d => d.total2026), backgroundColor: dados.map(d => d.formando ? '#B4B2A9' : '#1D9E75'), borderRadius: 3, barPercentage: 0.7 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 10 }, maxRotation: 45, autoSkip: false }, grid: { display: false } },
+      y: { ticks: { font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+    }
+  }
+});
+
+const segmentos = [
+  { label: 'Infantil',    pct: Math.round((6+10+8)/(6+12+15)*100) },
+  { label: 'Fund. I',     pct: Math.round((37+31+28+21+19)/(39+35+31+25+26)*100) },
+  { label: 'Fund. II',    pct: Math.round((33+38+45+36)/(42+53+50+50)*100) },
+  { label: 'Ens. Médio',  pct: Math.round((32+39)/(47+40)*100) },
+];
+
+new Chart(document.getElementById('chartRemat'), {
+  type: 'bar',
+  data: {
+    labels: segmentos.map(s => s.label),
+    datasets: [{
+      data: segmentos.map(s => s.pct),
+      backgroundColor: segmentos.map(s => s.pct >= 85 ? '#1D9E75' : s.pct >= 75 ? '#EF9F27' : '#D85A30'),
+      borderRadius: 4, barPercentage: 0.55
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 12 } }, grid: { display: false } },
+      y: { min: 0, max: 100, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } }
+    }
+  }
+});
+
+const tbody = document.getElementById('tableBody');
+dados.forEach(d => {
+  if (d.formando) {
+    tbody.innerHTML += `<tr>
+      <td><strong>${d.sala}</strong></td>
+      <td>${d.a2025}</td>
+      <td style="color:#aaa">—</td>
+      <td>${d.novos}</td>
+      <td>${d.total2026}</td>
+      <td style="color:#aaa">—</td>
+      <td><span class="badge badge-gray">Formandos</span></td>
+    </tr>`;
+    return;
+  }
+  const pct = d.pct;
+  const cor = pct >= 90 ? '#1D9E75' : pct >= 75 ? '#EF9F27' : '#D85A30';
+  const badgeClass = pct >= 90 ? 'badge-green' : pct >= 75 ? 'badge-amber' : 'badge-red';
+  const badgeText  = pct >= 90 ? 'Ótimo' : pct >= 75 ? 'Regular' : 'Atenção';
+  const varPct = d.a2025 > 0 ? Math.round((d.total2026 - d.a2025) / d.a2025 * 100) : 0;
+  tbody.innerHTML += `<tr>
+    <td><strong>${d.sala}</strong></td>
+    <td>${d.a2025}</td>
+    <td>${d.remat}</td>
+    <td>${d.novos}</td>
+    <td>${d.total2026} <span style="font-size:11px;color:${varPct>=0?'#1D9E75':'#D85A30'}">${varPct>=0?'+':''}${varPct}%</span></td>
+    <td><div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${cor}"></div></div>${pct}%</td>
+    <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+  </tr>`;
+});
+
+const totAll2025 = dados.reduce((s,d) => s+d.a2025, 0);
+tbody.innerHTML += `<tr class="total-row">
+  <td>Total</td>
+  <td>${totAll2025}</td>
+  <td>${totRemat}</td>
+  <td>${totNovos}</td>
+  <td>${tot2026}</td>
+  <td>${pctGeral}%</td>
+  <td></td>
+</tr>`;
+</script>
+</body>
+</html>
