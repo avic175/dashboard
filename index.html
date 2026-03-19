@@ -391,9 +391,9 @@ function switchTab(id) {
   document.getElementById('panel-' + id).classList.add('active');
 }
 
-function barColor(pct) { return pct >= 90 ? '#1D9E75' : pct >= 75 ? '#EF9F27' : '#D85A30'; }
-function badgeClass(pct) { return pct >= 90 ? 'badge-green' : pct >= 75 ? 'badge-amber' : 'badge-red'; }
-function badgeText(pct) { return pct >= 90 ? 'Ótimo' : pct >= 75 ? 'Regular' : 'Atenção'; }
+function barColor(pct) { return pct >= 90 ? '#1D9E75' : pct >= 80 ? '#EF9F27' : '#D85A30'; }
+function badgeClass(pct) { return pct >= 90 ? 'badge-green' : pct >= 80 ? 'badge-amber' : 'badge-red'; }
+function badgeText(pct) { return pct >= 90 ? 'Ótimo' : pct >= 80 ? 'Regular' : 'Atenção'; }
 
 function buildTable(tbodyId, dados) {
   const tbody = document.getElementById(tbodyId);
