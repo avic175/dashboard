@@ -95,6 +95,12 @@ tr.total-row td { font-weight: 600; background: #f5f4f0; border-top: 1px solid #
 <div id="panel-geral" class="panel active">
 <div class="container">
   <div class="section-label">Resumo por unidade — 12/03/2026</div>
+  <div class="metrics" style="margin-bottom:1.5rem;">
+    <div class="metric"><div class="metric-label">Total alunos 2026</div><div class="metric-value" id="gTot26"></div><div class="metric-sub" id="gVar"></div></div>
+    <div class="metric"><div class="metric-label">Total alunos 2025</div><div class="metric-value" id="gTot25"></div><div class="metric-sub">ano anterior</div></div>
+    <div class="metric"><div class="metric-label">Taxa remat. geral</div><div class="metric-value" id="gRemat"></div><div class="metric-sub pos" id="gPct">excl. formandos</div></div>
+    <div class="metric"><div class="metric-label">Novos ingressantes</div><div class="metric-value" id="gNovos"></div><div class="metric-sub pos">em 2026</div></div>
+  </div>
   <div class="overview-grid" id="ovGrid"></div>
   <div class="charts-row-equal">
     <div class="card">
@@ -129,11 +135,13 @@ tr.total-row td { font-weight: 600; background: #f5f4f0; border-top: 1px solid #
 <div class="container">
   <div class="section-label">Matrículas — Avicenna Leme</div>
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Total 2026</div><div class="metric-value">452</div><div class="metric-sub pos">+69 novos</div></div>
-    <div class="metric"><div class="metric-label">Rematrículas</div><div class="metric-value">383</div><div class="metric-sub">de 523 em 2025</div></div>
-    <div class="metric"><div class="metric-label">Taxa remat.</div><div class="metric-value">81%</div><div class="metric-sub pos">geral</div></div>
-    <div class="metric"><div class="metric-label">Turmas</div><div class="metric-value">22</div><div class="metric-sub">salas ativas</div></div>
+    <div class="metric"><div class="metric-label">Total 2026</div><div class="metric-value">452</div><div class="metric-sub neg">vs 523 em 2025 (−14%)</div></div>
+    <div class="metric"><div class="metric-label">Rematrículas</div><div class="metric-value">383</div><div class="metric-sub">de 471 elegíveis</div></div>
+    <div class="metric"><div class="metric-label">Taxa remat.</div><div class="metric-value">81%</div><div class="metric-sub pos">excl. formandos</div></div>
+    <div class="metric"><div class="metric-label">Novos ingressantes</div><div class="metric-value">69</div><div class="metric-sub pos">em 2026</div></div>
   </div>
+  <div class="section-label">Taxa de rematrícula por segmento — AVL</div>
+  <div class="metrics" id="segAVL"></div>
   <div class="charts-row">
     <div class="card">
       <div class="card-title">Alunos por turma — 2025 vs 2026</div>
@@ -174,8 +182,8 @@ tr.total-row td { font-weight: 600; background: #f5f4f0; border-top: 1px solid #
 <div class="container">
   <div class="section-label">Matrículas — Avicenna Pirassununga</div>
   <div class="metrics">
-    <div class="metric"><div class="metric-label">Total 2026</div><div class="metric-value">224</div><div class="metric-sub pos">+18 novos</div></div>
-    <div class="metric"><div class="metric-label">Rematrículas</div><div class="metric-value">206</div><div class="metric-sub">de 230 em 2025</div></div>
+    <div class="metric"><div class="metric-label">Total 2026</div><div class="metric-value">224</div><div class="metric-sub neg">vs 230 em 2025 (−3%)</div></div>
+    <div class="metric"><div class="metric-label">Rematrículas</div><div class="metric-value">208</div><div class="metric-sub">de 242 elegíveis</div></div>
     <div class="metric"><div class="metric-label">Taxa remat.</div><div class="metric-value">86%</div><div class="metric-sub pos">incl. migrantes ACJ+APF</div></div>
     <div class="metric"><div class="metric-label">Turmas</div><div class="metric-value">6</div><div class="metric-sub">salas ativas</div></div>
   </div>
@@ -331,8 +339,8 @@ tr.total-row td { font-weight: 600; background: #f5f4f0; border-top: 1px solid #
   <div class="section-label">Matrículas — Arquimedes Santos Dumont</div>
   <div class="metrics">
     <div class="metric"><div class="metric-label">Total 2026</div><div class="metric-value">235</div><div class="metric-sub pos">+55 novos</div></div>
-    <div class="metric"><div class="metric-label">Rematrículas</div><div class="metric-value">180</div><div class="metric-sub">de 229 em 2025</div></div>
-    <div class="metric"><div class="metric-label">Taxa remat.</div><div class="metric-value">87%</div><div class="metric-sub pos">excl. 3º Ano</div></div>
+    <div class="metric"><div class="metric-label">Rematrículas</div><div class="metric-value">180</div><div class="metric-sub">de 206 elegíveis</div></div>
+    <div class="metric"><div class="metric-label">Taxa remat.</div><div class="metric-value">87%</div><div class="metric-sub pos">excl. 3º Ano → ACJ</div></div>
     <div class="metric"><div class="metric-label">Turmas</div><div class="metric-value">16</div><div class="metric-sub">salas ativas</div></div>
   </div>
   <div class="charts-row">
@@ -403,24 +411,56 @@ function barColor(pct) { return pct >= 90 ? '#1D9E75' : pct >= 80 ? '#EF9F27' : 
 function badgeClass(pct) { return pct >= 90 ? 'badge-green' : pct >= 80 ? 'badge-amber' : 'badge-red'; }
 function badgeText(pct) { return pct >= 90 ? 'Ótimo' : pct >= 80 ? 'Regular' : 'Atenção'; }
 
-function buildTable(tbodyId, dados) {
+function buildTable(tbodyId, dados, segmentSummaryId) {
   const tbody = document.getElementById(tbodyId);
   let tot2025=0, totRemat=0, totNovos=0, tot2026=0;
   dados.forEach(d => {
-    const t26 = d.remat + d.novos;
-    const pct = d.a2025 > 0 ? Math.round(d.remat / d.a2025 * 100) : 0;
+    const t26 = d.tot2026 !== undefined ? d.tot2026 : d.remat + d.novos;
+    const pct = d.pctFixed !== undefined ? d.pctFixed : (d.baseRemat||d.a2025) > 0 ? Math.round(d.remat/(d.baseRemat||d.a2025)*100) : 0;
     const varP = d.a2025 > 0 ? Math.round((t26 - d.a2025) / d.a2025 * 100) : 0;
     const skipPct = d.skipPct;
-    tot2025 += d.a2025; totRemat += d.remat; totNovos += d.novos; tot2026 += t26;
+    if (!d.skipTotal) { tot2025 += d.a2025; totRemat += d.remat; totNovos += d.novos; tot2026 += t26; }
+    const migLabel = d.label ? `<span style="font-size:10px;color:#378ADD;margin-left:4px">${d.label}</span>` : '';
     tbody.innerHTML += `<tr>
-      <td><strong>${d.sala}</strong></td><td>${d.a2025}</td><td>${d.remat || '—'}</td><td>${d.novos}</td>
+      <td><strong>${d.sala}</strong>${migLabel}</td><td>${d.a2025}</td><td>${d.remat || '—'}</td><td>${d.novos}</td>
       <td>${t26} <span style="font-size:11px;color:${varP>=0?'#1D9E75':'#D85A30'}">${varP>=0?'+':''}${varP}%</span></td>
       <td>${skipPct ? '—' : `<div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${barColor(pct)}"></div></div>${pct}%`}</td>
-      <td>${skipPct ? '' : `<span class="badge ${badgeClass(pct)}">${badgeText(pct)}</span>`}</td>
+      <td>${skipPct ? '<span style="font-size:11px;color:#888">Migra</span>' : `<span class="badge ${badgeClass(pct)}">${badgeText(pct)}</span>`}</td>
     </tr>`;
   });
   const pctGeral = tot2025 > 0 ? Math.round(totRemat/tot2025*100) : 0;
   tbody.innerHTML += `<tr class="total-row"><td>Total</td><td>${tot2025}</td><td>${totRemat}</td><td>${totNovos}</td><td>${tot2026}</td><td>${pctGeral}%</td><td></td></tr>`;
+
+  // Segment summary
+  if (segmentSummaryId) {
+    const el = document.getElementById(segmentSummaryId);
+    if (el) {
+      const segments = [
+        { label:'Infantil',       filter: d => d.sala.startsWith('Infantil') },
+        { label:'Fundamental I',  filter: d => ['1º Ano','2º Ano','3º Ano','4º Ano','5º Ano'].includes(d.sala) },
+        { label:'Fundamental II', filter: d => ['6º Ano','7º Ano','8º Ano','9º Ano'].includes(d.sala) },
+        { label:'Ensino Médio',   filter: d => ['1ª Série','2ª Série','3ª Série'].includes(d.sala) },
+      ];
+      el.innerHTML = segments.map(seg => {
+        const rows = dados.filter(seg.filter).filter(d => !d.skipPct);
+        if (!rows.length) return '';
+        const totalRemat = rows.reduce((s,d) => s + (d.pctFixed !== undefined ? 0 : d.remat), 0);
+        // Use average of pctFixed if available, else calculate
+        const hasPctFixed = rows.every(d => d.pctFixed !== undefined);
+        const pct = hasPctFixed
+          ? Math.round(rows.reduce((s,d)=>s+d.pctFixed,0)/rows.length)
+          : rows.reduce((s,d)=>s+(d.baseRemat||d.a2025),0) > 0
+            ? Math.round(rows.reduce((s,d)=>s+d.remat,0)/rows.reduce((s,d)=>s+(d.baseRemat||d.a2025),0)*100) : 0;
+        const cor = barColor(pct);
+        const tot26 = rows.reduce((s,d)=>s+d.remat+d.novos,0);
+        return `<div class="metric">
+          <div class="metric-label">${seg.label}</div>
+          <div class="metric-value" style="color:${cor}">${pct}%</div>
+          <div class="metric-sub">${tot26} alunos em 2026</div>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 function buildBarChart(canvasId, labels, data2025, data2026) {
@@ -465,28 +505,30 @@ function buildPVChart(canvasId, labels, d2025, d2026) {
 // ===== DADOS =====
 
 const dadosAVL = [
-  {sala:'Infantil 3', a2025:6,  remat:6,  novos:0},
-  {sala:'Infantil 4', a2025:12, remat:10, novos:2},
-  {sala:'Infantil 5', a2025:15, remat:8,  novos:2},
-  {sala:'1º Ano',     a2025:39, remat:37, novos:11},
-  {sala:'2º Ano',     a2025:35, remat:31, novos:1},
-  {sala:'3º Ano',     a2025:31, remat:28, novos:2},
-  {sala:'4º Ano',     a2025:25, remat:21, novos:5},
-  {sala:'5º Ano',     a2025:26, remat:19, novos:2},
-  {sala:'6º Ano',     a2025:42, remat:33, novos:8},
-  {sala:'7º Ano',     a2025:53, remat:38, novos:6},
-  {sala:'8º Ano',     a2025:50, remat:45, novos:6},
-  {sala:'9º Ano',     a2025:50, remat:36, novos:5},
-  {sala:'1ª Série',   a2025:47, remat:32, novos:6},
-  {sala:'2ª Série',   a2025:40, remat:39, novos:10},
-  {sala:'3ª Série',   a2025:52, remat:39, novos:3},
+  {sala:'Infantil 3', a2025:6,  remat:6,  novos:0, tot2026:0,  pctFixed:100, skipTotal:true},
+  {sala:'Infantil 4', a2025:12, remat:8,  novos:2, tot2026:10, pctFixed:83},
+  {sala:'Infantil 5', a2025:15, remat:8,  novos:2, tot2026:10, pctFixed:53},
+  {sala:'1º Ano',     a2025:39, remat:37, novos:11, tot2026:19, pctFixed:95},
+  {sala:'2º Ano',     a2025:35, remat:31, novos:1,  tot2026:38, pctFixed:89},
+  {sala:'3º Ano',     a2025:31, remat:28, novos:2,  tot2026:33, pctFixed:90},
+  {sala:'4º Ano',     a2025:25, remat:21, novos:5,  tot2026:33, pctFixed:84},
+  {sala:'5º Ano',     a2025:26, remat:19, novos:2,  tot2026:23, pctFixed:73},
+  {sala:'6º Ano',     a2025:42, remat:33, novos:8,  tot2026:27, pctFixed:79},
+  {sala:'7º Ano',     a2025:53, remat:38, novos:6,  tot2026:39, pctFixed:72},
+  {sala:'8º Ano',     a2025:50, remat:45, novos:6,  tot2026:44, pctFixed:90},
+  {sala:'9º Ano',     a2025:50, remat:36, novos:5,  tot2026:50, pctFixed:72},
+  {sala:'1ª Série',   a2025:47, remat:32, novos:6,  tot2026:42, pctFixed:68},
+  {sala:'2ª Série',   a2025:40, remat:39, novos:10, tot2026:42, pctFixed:98},
+  {sala:'3ª Série',   a2025:52, remat:39, novos:3,  tot2026:42, skipPct:true},
 ];
 
 const dadosAVP = [
-  // AVP: 1ª a 3ª Série. Alunos novos na 1ª Série incluem migrantes do ACJ 9º e APF 9º
-  {sala:'1ª Série', a2025:76, remat:66, novos:10},
-  {sala:'2ª Série', a2025:83, remat:66, novos:7},
-  {sala:'3ª Série', a2025:71, remat:74, novos:1},
+  // 1ª Série 2026 = 68 remat + 8 novos = 76. % usa base 83 (ACJ+APF)
+  {sala:'1ª Série', a2025:76, remat:68, novos:8,  baseRemat:83},
+  // 2ª Série 2026 = 66 remat + 7 novos = 73. % usa base 76 (1ª Série 2025)
+  {sala:'2ª Série', a2025:83, remat:66, novos:7,  baseRemat:76},
+  // 3ª Série 2026 = 74 remat + 1 novo = 75. % usa base 83 (2ª Série 2025)
+  {sala:'3ª Série', a2025:71, remat:74, novos:1,  baseRemat:83},
 ];
 
 const dadosAVA = [
@@ -532,7 +574,7 @@ const dadosAPF = [
   {sala:'6º Ano',        a2025:20, remat:17, novos:2},
   {sala:'7º Ano',        a2025:23, remat:21, novos:2},
   {sala:'8º Ano',        a2025:10, remat:9,  novos:0},
-  {sala:'9º Ano',        a2025:24, remat:0,  novos:0, skipPct:true},
+  {sala:'9º Ano',        a2025:24, remat:0,  novos:0, skipPct:true, label:'→ AVP'},
 ];
 
 const dadosASD = [
@@ -543,7 +585,7 @@ const dadosASD = [
   {sala:'Infantil 4',    a2025:41, remat:40, novos:2},
   {sala:'1º Ano',        a2025:36, remat:29, novos:6},
   {sala:'2º Ano',        a2025:26, remat:24, novos:4},
-  {sala:'3º Ano',        a2025:23, remat:0,  novos:0, skipPct:true},
+  {sala:'3º Ano',        a2025:23, remat:0,  novos:0, skipPct:true, label:'→ ACJ'},
 ];
 
 const dadosACJ = [
@@ -560,11 +602,11 @@ const dadosACJ = [
   {sala:'6º Ano',     a2025:58, remat:44, novos:1},
   {sala:'7º Ano',     a2025:64, remat:59, novos:2},
   {sala:'8º Ano',     a2025:76, remat:68, novos:5},
-  {sala:'9º Ano',     a2025:59, remat:0,  novos:2, skipPct:true},
+  {sala:'9º Ano',     a2025:59, remat:0,  novos:2, skipPct:true, label:'→ AVP'},
 ];
 
 // ===== BUILD TABLES =====
-buildTable('tableAVL', dadosAVL);
+buildTable('tableAVL', dadosAVL, 'segAVL');
 buildTable('tableAVP', dadosAVP);
 buildTable('tableAVA', dadosAVA);
 buildTable('tableAVS', dadosAVS);
@@ -573,7 +615,7 @@ buildTable('tableASD', dadosASD);
 buildTable('tableACJ', dadosACJ);
 
 // ===== BUILD CHARTS =====
-buildBarChart('chartAVL', dadosAVL.map(d=>d.sala), dadosAVL.map(d=>d.a2025), dadosAVL.map(d=>d.remat+d.novos));
+buildBarChart('chartAVL', dadosAVL.map(d=>d.sala), dadosAVL.map(d=>d.a2025), dadosAVL.map(d=>d.tot2026!==undefined?d.tot2026:d.remat+d.novos));
 buildBarChart('chartAVP', dadosAVP.map(d=>d.sala), dadosAVP.map(d=>d.a2025), dadosAVP.map(d=>d.remat+d.novos));
 buildBarChart('chartAVA', dadosAVA.map(d=>d.sala), dadosAVA.map(d=>d.a2025), dadosAVA.map(d=>d.remat+d.novos));
 buildBarChart('chartAVS', dadosAVS.map(d=>d.sala), dadosAVS.map(d=>d.a2025), dadosAVS.map(d=>d.remat+d.novos));
@@ -581,7 +623,7 @@ buildBarChart('chartAPF', dadosAPF.map(d=>d.sala), dadosAPF.map(d=>d.a2025), dad
 buildBarChart('chartASD', dadosASD.map(d=>d.sala), dadosASD.map(d=>d.a2025), dadosASD.map(d=>d.remat+d.novos));
 buildBarChart('chartACJ', dadosACJ.map(d=>d.sala), dadosACJ.map(d=>d.a2025), dadosACJ.map(d=>d.remat+d.novos));
 
-function pcts(dados) { return dados.filter(d=>!d.skipPct).map(d=>d.a2025>0?Math.round(d.remat/d.a2025*100):0); }
+function pcts(dados) { return dados.filter(d=>!d.skipPct).map(d=>{ const base=d.baseRemat||d.a2025; return base>0?Math.round(d.remat/base*100):0; }); }
 function labs(dados) { return dados.filter(d=>!d.skipPct).map(d=>d.sala); }
 
 buildPctChart('chartAVLseg', labs(dadosAVL), pcts(dadosAVL));
@@ -646,14 +688,30 @@ new Chart(document.getElementById('chartGeralPct'), {
 });
 // Tabela consolidada geral
 const geralData = [
-  { nome:'AVL — Leme',           a2025:523, a2026:452, remat:383, pct:81 },
-  { nome:'AVP — Pirassununga',   a2025:230, a2026:224, remat:208, pct:86 },
-  { nome:'AVA — Araras',         a2025:154, a2026:223, remat:131, pct:94 },
-  { nome:'AVS — Sumaré',         a2025:178, a2026:241, remat:140, pct:86 },
-  { nome:'APF — Porto Ferreira', a2025:212, a2026:178, remat:144, pct:77 },
-  { nome:'ASD — Santos Dumont',  a2025:229, a2026:235, remat:180, pct:87 },
-  { nome:'ACJ — Cidade Jardim',  a2025:486, a2026:425, remat:375, pct:83 },
+  { nome:'AVL', a2025:523, a2026:452, remat:383, novos:69, pct:81 },
+  { nome:'AVP', a2025:230, a2026:224, remat:208, novos:16, pct:86 },
+  { nome:'AVA', a2025:154, a2026:223, remat:131, novos:92, pct:94 },
+  { nome:'AVS', a2025:178, a2026:241, remat:140, novos:101, pct:86 },
+  { nome:'APF', a2025:212, a2026:178, remat:144, novos:34, pct:77 },
+  { nome:'ASD', a2025:229, a2026:235, remat:180, novos:55, pct:87 },
+  { nome:'ACJ', a2025:486, a2026:425, remat:375, novos:50, pct:83 },
 ];
+// Métricas topo visão geral
+const _gt25 = geralData.reduce((s,d)=>s+d.a2025,0);
+const _gt26 = geralData.reduce((s,d)=>s+d.a2026,0);
+const _gremat = geralData.reduce((s,d)=>s+d.remat,0);
+const _gbase = geralData.reduce((s,d)=>s+(d.base||d.a2025),0);
+const _gvar = Math.round((_gt26-_gt25)/_gt25*100);
+document.getElementById('gTot26').textContent = _gt26.toLocaleString('pt-BR');
+document.getElementById('gTot25').textContent = _gt25.toLocaleString('pt-BR');
+document.getElementById('gRemat').textContent = Math.round(_gremat/_gt25*100) + '%';
+document.getElementById('gVar').innerHTML = `<span style="color:${_gvar>=0?'#1D9E75':'#D85A30'}">${_gvar>=0?'+':''}${_gvar}% vs 2025</span>`;
+document.getElementById('gPct').textContent = 'excl. formandos';
+
+// Novos = soma dos novos por unidade
+const _gnovos = geralData.reduce((s,d)=>s+d.novos,0);
+document.getElementById('gNovos').textContent = '+' + _gnovos.toLocaleString('pt-BR');
+
 const tbGeral = document.getElementById('tableGeral');
 let gt25=0, gt26=0, gremat=0;
 geralData.forEach(d => {
